@@ -1,3 +1,8 @@
-DVD screensaver from The Office season 4, episode 3.
+# DVD Screensaver
 
-Run with python3 dvd_screensaver.py
+DVD screensaver from The Office season 4, episode 5.
+
+## Running
+
+    pip3 install pygame
+    python3 dvd_screensaver.py
