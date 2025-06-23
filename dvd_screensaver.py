@@ -9,9 +9,7 @@ pygame.init()
 # Fullscreen display
 infoObject = pygame.display.Info()
 WIDTH, HEIGHT = infoObject.current_w, infoObject.current_h
-#screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN | pygame.SCALED, vsync=1)
-#screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN | pygame.SCALED)
 
 pygame.display.set_caption("DVD Screensaver")
 
@@ -19,23 +17,16 @@ pygame.display.set_caption("DVD Screensaver")
 pygame.mouse.set_visible(False)
 
 # Logo dimensions (more square-like)
-logo_width, logo_height = 150, 100
+logo_width, logo_height = 150, 150
 
 # Fonts
 pygame.font.init()
-font_large = pygame.font.SysFont(['Arial Black', 'Arial', 'Sans'], 50, bold=True)
-font_small = pygame.font.SysFont(['Arial', 'Sans'], 20, bold=True)
+font_large = pygame.font.SysFont(['Arial Black', 'Arial', 'Sans'], 50, bold=True, italic=True)
+font_small = pygame.font.SysFont(['Arial', 'Sans'], 24, bold=True)
 
 COLOR_PALETTE = [
     (255, 0, 0),      # Red
-    (0, 255, 0),      # Green
     (65, 131, 196),   # Blue-ish
-    #(0, 0, 255),      # Blue
-    #(255, 255, 0),    # Yellow
-    #(255, 0, 255),    # Magenta
-    #(0, 255, 255),    # Cyan
-    #(255, 128, 0),    # Orange
-    #(128, 0, 255),    # Purple
     (128, 255, 0)     # Lime
 ]
 
@@ -86,32 +77,33 @@ while running:
     x += speed_x * dt
     y += speed_y * dt
 
-    hit_corner = False
+    hit_edge = False
 
     if x <= 0:
         x = 0
         speed_x = abs(speed_x)
-        hit_corner = True
+        hit_edge = True
     elif x + logo_width >= WIDTH:
         x = WIDTH - logo_width
         speed_x = -abs(speed_x)
-        hit_corner = True
+        hit_edge = True
 
     if y <= 0:
         y = 0
         speed_y = abs(speed_y)
-        hit_corner = True
+        hit_edge = True
     elif y + logo_height >= HEIGHT:
         y = HEIGHT - logo_height
         speed_y = -abs(speed_y)
-        hit_corner = True
+        hit_edge = True
 
-    if hit_corner:
-        bg_color = random.choice(COLOR_PALETTE)
+    if hit_edge:
+        bg_colors = [color for color in COLOR_PALETTE if color != bg_color]
+        bg_color = random.choice(bg_colors)
 
     # Draw the logo
     logo.fill((0, 0, 0, 0))
-    pygame.draw.rect(logo, bg_color, (0, 0, logo_width, logo_height), border_radius=12)
+    pygame.draw.rect(logo, bg_color, (0, 0, logo_width, logo_height), border_radius=4)
 
     text_dvd = font_large.render("DVD", True, (0, 0, 0))
     text_video = font_small.render("VIDEO", True, (255, 255, 255))
