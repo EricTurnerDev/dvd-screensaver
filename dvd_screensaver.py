@@ -1,121 +1,134 @@
-import pygame
-import sys
+import pyglet
 import random
 import time
 
-# Initialize Pygame
-pygame.init()
-
-# Fullscreen display
-infoObject = pygame.display.Info()
-WIDTH, HEIGHT = infoObject.current_w, infoObject.current_h
-screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN | pygame.SCALED, vsync=1)
-
-pygame.display.set_caption("DVD Screensaver")
-
-# Hide the mouse cursor
-pygame.mouse.set_visible(False)
-
-# Logo dimensions (more square-like)
-logo_width, logo_height = 150, 150
-
-# Fonts
-pygame.font.init()
-font_large = pygame.font.SysFont(['Arial Black', 'Arial', 'Sans'], 50, bold=True, italic=True)
-font_small = pygame.font.SysFont(['Arial', 'Sans'], 24, bold=True)
-
+# === CONFIG ===
+LOGO_WIDTH = 150
+LOGO_HEIGHT = 150
+SPEED = 250
 COLOR_PALETTE = [
-    (255, 0, 0),      # Red
-    (65, 131, 196),   # Blue-ish
-    (128, 255, 0)     # Lime
+    (255, 0, 0),
+    (65, 131, 196),
+    (128, 255, 0)
 ]
 
-# Initial background color
+# === WINDOW ===
+window = pyglet.window.Window(
+    fullscreen=True,
+    vsync=True,
+    caption="DVD Screensaver"
+)
+window.set_mouse_visible(False)
+
+WINDOW_WIDTH = window.width
+WINDOW_HEIGHT = window.height
+
+# === INITIAL STATE ===
 bg_color = random.choice(COLOR_PALETTE)
 
-# Create the logo Surface
-logo = pygame.Surface((logo_width, logo_height), pygame.SRCALPHA)
+x = random.uniform(0, WINDOW_WIDTH - LOGO_WIDTH)
+y = random.uniform(0, WINDOW_HEIGHT - LOGO_HEIGHT)
 
-# Initial position (use floats for smooth motion)
-x = float(random.randint(0, WIDTH - logo_width))
-y = float(random.randint(0, HEIGHT - logo_height))
+dx = random.choice([-1, 1]) * SPEED
+dy = random.choice([-1, 1]) * SPEED
 
-# Speed in pixels per second
-speed_x = random.choice([-1, 1]) * 250  # slightly slower for realism
-speed_y = random.choice([-1, 1]) * 250
+# === FONTS ===
+dvd_label = pyglet.text.Label(
+    "DVD",
+    font_name='Arial Black',
+    font_size=40,
+    anchor_x='center',
+    anchor_y='center',
+    color=(0, 0, 0, 255)
+)
 
-# Store initial mouse position
-prev_mouse_pos = pygame.mouse.get_pos()
+video_label = pyglet.text.Label(
+    "VIDEO",
+    font_name='Arial',
+    font_size=20,
+    anchor_x='center',
+    anchor_y='center',
+    color=(255, 255, 255, 255)
+)
 
-clock = pygame.time.Clock()
-prev_time = time.time()
+# === RECTANGLE ===
+from pyglet import shapes
+logo_rect = shapes.Rectangle(
+    x, y, LOGO_WIDTH, LOGO_HEIGHT, color=bg_color
+)
 
-running = True
-while running:
-    # Delta time in seconds
-    current_time = time.time()
-    dt = current_time - prev_time
-    prev_time = current_time
+# === FLAGS ===
+startup_time = time.time()
+GRACE_PERIOD = 1.0  # seconds
 
-    # Limit FPS
-    clock.tick(120)
+# === UPDATE ===
+def update(dt):
+    global x, y, dx, dy, bg_color
 
-    # Check mouse movement
-    current_mouse_pos = pygame.mouse.get_pos()
-    if current_mouse_pos != prev_mouse_pos:
-        break
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            running = False
-
-    # Move with delta time
-    x += speed_x * dt
-    y += speed_y * dt
+    x += dx * dt
+    y += dy * dt
 
     hit_edge = False
 
     if x <= 0:
         x = 0
-        speed_x = abs(speed_x)
+        dx = abs(dx)
         hit_edge = True
-    elif x + logo_width >= WIDTH:
-        x = WIDTH - logo_width
-        speed_x = -abs(speed_x)
+    elif x + LOGO_WIDTH >= WINDOW_WIDTH:
+        x = WINDOW_WIDTH - LOGO_WIDTH
+        dx = -abs(dx)
         hit_edge = True
 
     if y <= 0:
         y = 0
-        speed_y = abs(speed_y)
+        dy = abs(dy)
         hit_edge = True
-    elif y + logo_height >= HEIGHT:
-        y = HEIGHT - logo_height
-        speed_y = -abs(speed_y)
+    elif y + LOGO_HEIGHT >= WINDOW_HEIGHT:
+        y = WINDOW_HEIGHT - LOGO_HEIGHT
+        dy = -abs(dy)
         hit_edge = True
 
     if hit_edge:
-        bg_colors = [color for color in COLOR_PALETTE if color != bg_color]
-        bg_color = random.choice(bg_colors)
+        bg_colors = [c for c in COLOR_PALETTE if c != bg_color]
+        new_color = random.choice(bg_colors)
+        logo_rect.color = new_color
+        global bg_color
+        bg_color = new_color
 
-    # Draw the logo
-    logo.fill((0, 0, 0, 0))
-    pygame.draw.rect(logo, bg_color, (0, 0, logo_width, logo_height), border_radius=4)
+    logo_rect.x = x
+    logo_rect.y = y
 
-    text_dvd = font_large.render("DVD", True, (0, 0, 0))
-    text_video = font_small.render("VIDEO", True, (255, 255, 255))
+# === DRAW ===
+@window.event
+def on_draw():
+    window.clear()
+    logo_rect.draw()
 
-    # Position: DVD upper center, VIDEO just below
-    logo.blit(text_dvd, text_dvd.get_rect(center=(logo_width // 2, logo_height // 2 - 15)))
-    logo.blit(text_video, text_video.get_rect(center=(logo_width // 2, logo_height // 2 + 25)))
+    # Draw DVD label with rotation to fake italic
+    dvd_label.x = x + LOGO_WIDTH // 2
+    dvd_label.y = y + LOGO_HEIGHT // 2 + 15
+    #dvd_label.rotation = 10  # slight slant
+    dvd_label.draw()
 
-    # Draw everything
-    screen.fill((0, 0, 0))
-    screen.blit(logo, (round(x), round(y)))
-    pygame.display.flip()
+    # Draw normal VIDEO label
+    video_label.x = x + LOGO_WIDTH // 2
+    video_label.y = y + LOGO_HEIGHT // 2 - 25
+    video_label.draw()
 
-pygame.quit()
-sys.exit()
+# === EXIT ===
+@window.event
+def on_key_press(symbol, modifiers):
+    window.close()
+
+@window.event
+def on_mouse_motion(x, y, dx, dy):
+    if time.time() - startup_time > GRACE_PERIOD:
+        window.close()
+
+@window.event
+def on_mouse_press(x, y, button, modifiers):
+    window.close()
+
+# === RUN ===
+pyglet.clock.schedule_interval(update, 1/120.0)
+pyglet.app.run()
