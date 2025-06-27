@@ -2,7 +2,7 @@
 
 DVD screensaver from The Office season 4, episode 5.
 
-![Screenshot](images/screenshot.png)
+![Screenshot](images/dvd-screensaver.gif)
 
 ## Running
 
